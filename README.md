@@ -50,16 +50,15 @@ That's it. If no Slack workspace is configured, the interactive setup wizard lau
 
 ### What the setup wizard does
 
-The wizard runs in 6 steps — it opens the right pages in your browser and tells you exactly what to click:
+The wizard runs in 5 steps — it opens the right pages in your browser and tells you exactly what to click:
 
 1. **Create Slack App** — opens [api.slack.com/apps](https://api.slack.com/apps), you create a new app
-2. **Add User Token Scopes** — lists the exact scopes to add under OAuth & Permissions
+2. **Add Scopes & Install** — lists the exact scopes to add, then you install to your workspace and copy the User OAuth Token
 3. **Enable Socket Mode** — guides you to create an app-level token
 4. **Subscribe to Events** — lists the exact events to subscribe to
-5. **Enter Credentials** — paste your Client ID, Client Secret, and App-Level Token
-6. **Authenticate** — opens Slack OAuth in your browser, you click Allow, done
+5. **Enter Tokens** — paste your User OAuth Token (`xoxp-...`) and App-Level Token (`xapp-...`)
 
-Config is saved to `~/.config/slack-tui/config.json`. Tokens are stored in your OS keychain.
+Config is saved to `~/.config/slack-tui/config.json`. Tokens are stored securely in your OS keychain.
 
 ### Build from source
 
@@ -83,7 +82,7 @@ slack-tui
 |---------|-------------|
 | `slack-tui` | Launch the TUI (runs setup wizard if not configured) |
 | `slack-tui setup` | Re-run the interactive setup wizard |
-| `slack-tui auth` | Re-authenticate with Slack (e.g. if token expired) |
+| `slack-tui auth` | Update your Slack token (e.g. if it expired) |
 
 ## Environment Variables
 

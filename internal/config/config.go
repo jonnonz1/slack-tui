@@ -3,9 +3,6 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 
@@ -155,39 +152,3 @@ func SaveAppToken(token string) error {
 	return keyring.Set(serviceName, appTokenKey, token)
 }
 
-type oauthResponse struct {
-	OK          bool   `json:"ok"`
-	Error       string `json:"error,omitempty"`
-	AuthedUser  struct {
-		AccessToken string `json:"access_token"`
-	} `json:"authed_user"`
-}
-
-func ExchangeCode(clientID, clientSecret, code string) (string, error) {
-	resp, err := http.PostForm("https://slack.com/api/oauth.v2.access", url.Values{
-		"client_id":     {clientID},
-		"client_secret": {clientSecret},
-		"code":          {code},
-		"redirect_uri":  {"http://localhost:9876/callback"},
-	})
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	var result oauthResponse
-	if err := json.Unmarshal(body, &result); err != nil {
-		return "", err
-	}
-
-	if !result.OK {
-		return "", fmt.Errorf("oauth error: %s", result.Error)
-	}
-
-	return result.AuthedUser.AccessToken, nil
-}

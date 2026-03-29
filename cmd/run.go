@@ -25,25 +25,11 @@ func runApp(cmd *cobra.Command, args []string) error {
 		if err := runSetup(cmd, args); err != nil {
 			return err
 		}
-		// Reload config after setup
-		cfg, err = config.Load()
-		if err != nil {
-			return fmt.Errorf("failed to reload config: %w", err)
-		}
 	}
 
 	token, err := config.GetToken()
 	if err != nil {
-		fmt.Println()
-		fmt.Printf("  %sNo auth token found. Re-running authentication...%s\n", colorPink, colorReset)
-		fmt.Println()
-		token, err = runOAuth(cfg)
-		if err != nil {
-			return fmt.Errorf("auth failed: %w", err)
-		}
-		if err := config.SaveToken(token); err != nil {
-			return fmt.Errorf("failed to save token: %w", err)
-		}
+		return fmt.Errorf("no auth token found — run 'slack-tui setup': %w", err)
 	}
 
 	appToken, err := config.GetAppToken()

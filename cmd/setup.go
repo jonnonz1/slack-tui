@@ -2,12 +2,9 @@ package cmd
 
 import (
 	"bufio"
-	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/jonnonz1/slack-tui/internal/config"
 	"github.com/pkg/browser"
@@ -34,7 +31,7 @@ func runSetup(cmd *cobra.Command, args []string) error {
 	printBanner()
 
 	// Step 1: Create Slack App
-	printStep(1, 6, "CREATE SLACK APP")
+	printStep(1, 5, "CREATE SLACK APP")
 	fmt.Println()
 	fmt.Printf("  %sI'll open api.slack.com/apps in your browser.%s\n", colorDim, colorReset)
 	fmt.Println()
@@ -47,7 +44,7 @@ func runSetup(cmd *cobra.Command, args []string) error {
 	_ = browser.OpenURL("https://api.slack.com/apps")
 
 	// Step 2: User Token Scopes
-	printStep(2, 6, "ADD USER TOKEN SCOPES")
+	printStep(2, 5, "ADD SCOPES & INSTALL")
 	fmt.Println()
 	fmt.Printf("  %sIn your new app, go to:%s\n", colorDim, colorReset)
 	fmt.Printf("  %sOAuth & Permissions%s > %sUser Token Scopes%s > add all of these:\n", colorBold, colorReset, colorBold, colorReset)
@@ -67,25 +64,24 @@ func runSetup(cmd *cobra.Command, args []string) error {
 		fmt.Printf("  %s%s%s\n", colorGreen, strings.Join(scopes[i:end], "  "), colorReset)
 	}
 	fmt.Println()
-
-	// Also add the redirect URL
-	fmt.Printf("  %sThen scroll down to%s Redirect URLs %sand add:%s\n", colorDim, colorReset, colorBold, colorReset)
-	fmt.Printf("  %shttp://localhost:9876/callback%s\n", colorGreen, colorReset)
+	fmt.Printf("  %sThen scroll up and click%s Install to Workspace%s > %sAllow%s\n", colorDim, colorBold, colorReset, colorBold, colorReset)
+	fmt.Printf("  %sCopy the%s User OAuth Token %s(starts with %sxoxp-%s)%s\n", colorDim, colorBold, colorDim, colorGreen, colorDim, colorReset)
 	fmt.Println()
 
-	waitForEnter(reader, "Press ENTER when scopes and redirect URL are saved...")
+	waitForEnter(reader, "Press ENTER when you've installed the app and copied the token...")
 
 	// Step 3: Enable Socket Mode
-	printStep(3, 6, "ENABLE SOCKET MODE")
+	printStep(3, 5, "ENABLE SOCKET MODE")
 	fmt.Println()
 	fmt.Printf("  %sGo to:%s %sSocket Mode%s (left sidebar) > toggle %sON%s\n", colorDim, colorReset, colorBold, colorReset, colorGreen, colorReset)
 	fmt.Printf("  %sCreate an app-level token with scope:%s %sconnections:write%s\n", colorDim, colorReset, colorGreen, colorReset)
+	fmt.Printf("  %sCopy the token (starts with %sxapp-%s)%s\n", colorDim, colorGreen, colorDim, colorReset)
 	fmt.Println()
 
 	waitForEnter(reader, "Press ENTER when Socket Mode is enabled...")
 
 	// Step 4: Event Subscriptions
-	printStep(4, 6, "SUBSCRIBE TO EVENTS")
+	printStep(4, 5, "SUBSCRIBE TO EVENTS")
 	fmt.Println()
 	fmt.Printf("  %sGo to:%s %sEvent Subscriptions%s > toggle %sON%s\n", colorDim, colorReset, colorBold, colorReset, colorGreen, colorReset)
 	fmt.Printf("  %sUnder%s Subscribe to bot events%s, add:%s\n", colorDim, colorBold, colorReset, colorReset)
@@ -96,19 +92,26 @@ func runSetup(cmd *cobra.Command, args []string) error {
 
 	waitForEnter(reader, "Press ENTER when events are subscribed...")
 
-	// Step 5: Collect credentials
-	printStep(5, 6, "ENTER CREDENTIALS")
+	// Step 5: Collect tokens
+	printStep(5, 5, "ENTER TOKENS")
 	fmt.Println()
-	fmt.Printf("  %sGo to%s Basic Information %sto find Client ID and Client Secret.%s\n", colorDim, colorBold, colorDim, colorReset)
-	fmt.Printf("  %sYour app-level token (xapp-...) is under%s Basic Information %s>%s App-Level Tokens%s.%s\n", colorDim, colorReset, colorDim, colorReset, colorBold, colorReset)
+	fmt.Printf("  %sPaste the tokens you copied earlier:%s\n", colorDim, colorReset)
 	fmt.Println()
 
-	clientID := prompt(reader, "Client ID")
-	clientSecret := prompt(reader, "Client Secret")
+	userToken := prompt(reader, "User OAuth Token (xoxp-...)")
 	appToken := prompt(reader, "App-Level Token (xapp-...)")
 
-	if clientID == "" || clientSecret == "" || appToken == "" {
-		return fmt.Errorf("all fields are required")
+	if userToken == "" || appToken == "" {
+		return fmt.Errorf("both tokens are required")
+	}
+
+	// Validate token prefixes
+	if !strings.HasPrefix(userToken, "xoxp-") {
+		fmt.Printf("\n  %s⚠ That doesn't look like a user token (should start with xoxp-)%s\n", colorPink, colorReset)
+		confirm := prompt(reader, "Continue anyway? (y/n)")
+		if strings.ToLower(confirm) != "y" {
+			return fmt.Errorf("setup cancelled")
+		}
 	}
 
 	if !strings.HasPrefix(appToken, "xapp-") {
@@ -121,33 +124,17 @@ func runSetup(cmd *cobra.Command, args []string) error {
 
 	// Save config
 	cfg := config.DefaultConfig()
-	cfg.ClientID = clientID
-	cfg.ClientSecret = clientSecret
+	cfg.ClientID = "installed"
+	cfg.ClientSecret = "installed"
 
 	if err := config.Save(cfg); err != nil {
 		return fmt.Errorf("failed to save config: %w", err)
 	}
+	if err := config.SaveToken(userToken); err != nil {
+		return fmt.Errorf("failed to save user token: %w", err)
+	}
 	if err := config.SaveAppToken(appToken); err != nil {
 		return fmt.Errorf("failed to save app token: %w", err)
-	}
-
-	fmt.Printf("\n  %s>>> CONFIG_SAVED%s\n", colorGreen, colorReset)
-
-	// Step 6: OAuth
-	printStep(6, 6, "AUTHENTICATE")
-	fmt.Println()
-	fmt.Printf("  %sOpening browser for Slack OAuth...%s\n", colorDim, colorReset)
-	fmt.Println()
-
-	token, err := runOAuth(cfg)
-	if err != nil {
-		fmt.Printf("  %s>>> AUTH_FAILED: %s%s\n", colorPink, err, colorReset)
-		fmt.Printf("  %sYou can retry later with:%s slack-tui auth\n", colorDim, colorReset)
-		return nil
-	}
-
-	if err := config.SaveToken(token); err != nil {
-		return fmt.Errorf("failed to save token: %w", err)
 	}
 
 	// Done!
@@ -165,91 +152,13 @@ func runSetup(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func runOAuth(cfg *config.Config) (string, error) {
-	codeCh := make(chan string, 1)
-	errCh := make(chan error, 1)
-
-	mux := http.NewServeMux()
-	mux.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
-		code := r.URL.Query().Get("code")
-		if code == "" {
-			errCh <- fmt.Errorf("no code in callback")
-			fmt.Fprint(w, "ERROR: No authorization code received.")
-			return
-		}
-		codeCh <- code
-		fmt.Fprintf(w, `<!DOCTYPE html>
-<html><body style="background:#10141a;color:#f6afef;font-family:'JetBrains Mono',monospace;padding:60px;text-align:center">
-<pre style="font-size:10px;line-height:1">
-  __  __  ___  _   _  ___  ____  ____   _    ____ _____
- |  \/  |/ _ \| \ | |/ _ \/ ___||  _ \ / \  / ___| ____|
- | |\/| | | | |  \| | | | \___ \| |_) / _ \| |   |  _|
- | |  | | |_| | |\  | |_| |___) |  __/ ___ \ |___| |___
- |_|  |_|\___/|_| \_|\___/|____/|_| /_/   \_\____|_____|
-</pre>
-<p style="color:#5edda0;font-size:18px">>>> AUTH_SUCCESS</p>
-<p style="color:#666">You can close this tab and return to your terminal.</p>
-</body></html>`)
-	})
-
-	server := &http.Server{Addr: ":9876", Handler: mux}
-
-	go func() {
-		if err := server.ListenAndServe(); err != http.ErrServerClosed {
-			errCh <- err
-		}
-	}()
-
-	userScopes := "channels:read,channels:history,groups:read,groups:history," +
-		"im:read,im:history,mpim:read,mpim:history," +
-		"chat:write,reactions:read,reactions:write," +
-		"users:read,files:read,files:write," +
-		"pins:read,pins:write,search:read," +
-		"team:read,usergroups:read"
-
-	authURL := fmt.Sprintf(
-		"https://slack.com/oauth/v2/authorize?client_id=%s&user_scope=%s&redirect_uri=%s",
-		cfg.ClientID, userScopes, "http://localhost:9876/callback",
-	)
-
-	fmt.Printf("  %s>>> If the browser doesn't open, visit:%s\n", colorDim, colorReset)
-	fmt.Printf("  %s%s%s\n", colorPink, authURL, colorReset)
-
-	_ = browser.OpenURL(authURL)
-
-	fmt.Printf("\n  %sWaiting for authorization...%s\n", colorDim, colorReset)
-
-	var token string
-	select {
-	case code := <-codeCh:
-		var err error
-		token, err = config.ExchangeCode(cfg.ClientID, cfg.ClientSecret, code)
-		if err != nil {
-			return "", err
-		}
-		fmt.Printf("  %s>>> AUTH_COMPLETE — token saved to keyring.%s\n", colorGreen, colorReset)
-
-	case err := <-errCh:
-		return "", err
-
-	case <-time.After(5 * time.Minute):
-		return "", fmt.Errorf("timed out after 5 minutes")
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	_ = server.Shutdown(ctx)
-
-	return token, nil
-}
-
 func printBanner() {
 	fmt.Println()
 	fmt.Printf("  %s╔══════════════════════════════════════════╗%s\n", colorPink, colorReset)
-	fmt.Printf("  %s║  MONOSPACE_CMD_V1.0 — SETUP_WIZARD      ║%s\n", colorPink, colorReset)
+	fmt.Printf("  %s║       SLACK-TUI — SETUP_WIZARD          ║%s\n", colorPink, colorReset)
 	fmt.Printf("  %s╚══════════════════════════════════════════╝%s\n", colorPink, colorReset)
 	fmt.Println()
-	fmt.Printf("  %sThis wizard will walk you through connecting\n  to your Slack workspace in 6 steps.%s\n", colorDim, colorReset)
+	fmt.Printf("  %sThis wizard will walk you through connecting\n  to your Slack workspace in 5 steps.%s\n", colorDim, colorReset)
 	fmt.Println()
 }
 
