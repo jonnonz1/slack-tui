@@ -5,15 +5,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/zalando/go-keyring"
 )
 
 const (
-	serviceName    = "slack-tui"
-	tokenKey       = "slack-user-token"
-	appTokenKey    = "slack-app-token"
 	configFileName = "config.json"
+	tokensFileName = "tokens.json"
 )
 
 type AIHookConfig struct {
@@ -44,6 +40,12 @@ type Config struct {
 	TimeFormat   string      `json:"time_format"`
 }
 
+// tokens is stored in a separate file with restrictive permissions.
+type tokens struct {
+	UserToken string `json:"user_token,omitempty"`
+	AppToken  string `json:"app_token,omitempty"`
+}
+
 func configDir() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -59,6 +61,14 @@ func configPath() (string, error) {
 		return "", err
 	}
 	return filepath.Join(dir, configFileName), nil
+}
+
+func tokensPath() (string, error) {
+	dir, err := configDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, tokensFileName), nil
 }
 
 func DefaultConfig() *Config {
@@ -129,26 +139,82 @@ func Save(cfg *Config) error {
 	return os.WriteFile(path, data, 0600)
 }
 
+func loadTokens() (*tokens, error) {
+	path, err := tokensPath()
+	if err != nil {
+		return &tokens{}, nil
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return &tokens{}, nil
+		}
+		return nil, err
+	}
+
+	var t tokens
+	if err := json.Unmarshal(data, &t); err != nil {
+		return nil, err
+	}
+	return &t, nil
+}
+
+func saveTokens(t *tokens) error {
+	path, err := tokensPath()
+	if err != nil {
+		return err
+	}
+
+	data, err := json.MarshalIndent(t, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, data, 0600)
+}
+
 func GetToken() (string, error) {
-	// Check env var first for easy dev/CI usage
 	if t := os.Getenv("SLACK_TOKEN"); t != "" {
 		return t, nil
 	}
-	return keyring.Get(serviceName, tokenKey)
+	tok, err := loadTokens()
+	if err != nil {
+		return "", err
+	}
+	if tok.UserToken == "" {
+		return "", fmt.Errorf("no user token configured")
+	}
+	return tok.UserToken, nil
 }
 
 func SaveToken(token string) error {
-	return keyring.Set(serviceName, tokenKey, token)
+	tok, err := loadTokens()
+	if err != nil {
+		tok = &tokens{}
+	}
+	tok.UserToken = token
+	return saveTokens(tok)
 }
 
 func GetAppToken() (string, error) {
 	if t := os.Getenv("SLACK_APP_TOKEN"); t != "" {
 		return t, nil
 	}
-	return keyring.Get(serviceName, appTokenKey)
+	tok, err := loadTokens()
+	if err != nil {
+		return "", err
+	}
+	if tok.AppToken == "" {
+		return "", fmt.Errorf("no app token configured")
+	}
+	return tok.AppToken, nil
 }
 
 func SaveAppToken(token string) error {
-	return keyring.Set(serviceName, appTokenKey, token)
+	tok, err := loadTokens()
+	if err != nil {
+		tok = &tokens{}
+	}
+	tok.AppToken = token
+	return saveTokens(tok)
 }
-

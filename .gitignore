@@ -37,6 +37,7 @@ credentials.json
 secrets.yaml
 secrets.json
 config.json
+tokens.json
 
 # Local config (contains client_id/secret)
 ~/.config/slack-tui/
