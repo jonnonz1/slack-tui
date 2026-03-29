@@ -1,0 +1,234 @@
+<!-- Config View: MONOSPACE_CMD_V1.0 - Vim-like Editor for Settings/Configuration -->
+<!-- Settings YAML editor with line numbers, syntax highlighting, terminal overlay prompt -->
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&amp;family=JetBrains+Mono:wght@100..800&amp;family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-fixed": "#002112",
+              "on-background": "#dfe2eb",
+              "on-tertiary-fixed": "#1a1c1c",
+              "secondary-container": "#0aa56e",
+              "on-error-container": "#ffdad6",
+              "error": "#ffb4ab",
+              "on-tertiary": "#2f3131",
+              "surface-variant": "#31353c",
+              "tertiary": "#c6c6c7",
+              "on-primary-fixed": "#370139",
+              "on-surface-variant": "#d2c2cd",
+              "inverse-primary": "#844981",
+              "on-secondary-container": "#00311d",
+              "surface-dim": "#10141a",
+              "primary": "#f6afef",
+              "outline-variant": "#4f434c",
+              "background": "#10141a",
+              "tertiary-fixed": "#e2e2e2",
+              "primary-container": "#4a154b",
+              "on-primary-fixed-variant": "#693168",
+              "inverse-on-surface": "#2d3137",
+              "surface-container-high": "#262a31",
+              "on-secondary": "#003822",
+              "on-primary": "#4f1a50",
+              "surface-tint": "#f6afef",
+              "surface-container": "#1c2026",
+              "on-surface": "#dfe2eb",
+              "outline": "#9b8d97",
+              "error-container": "#93000a",
+              "inverse-surface": "#dfe2eb",
+              "on-tertiary-container": "#929393",
+              "on-primary-container": "#be7db9",
+              "surface": "#10141a",
+              "tertiary-container": "#2a2c2c",
+              "primary-fixed-dim": "#f6afef",
+              "secondary": "#5edda0",
+              "surface-bright": "#353940",
+              "on-secondary-fixed-variant": "#005234",
+              "tertiary-fixed-dim": "#c6c6c7",
+              "on-error": "#690005",
+              "primary-fixed": "#ffd6f8",
+              "surface-container-lowest": "#0a0e14",
+              "surface-container-low": "#181c22",
+              "on-tertiary-fixed-variant": "#454747",
+              "secondary-fixed": "#7cfabb",
+              "secondary-fixed-dim": "#5edda0",
+              "surface-container-highest": "#31353c"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Inter"],
+              "label": ["JetBrains Mono"]
+            },
+            borderRadius: {"DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 1.25rem;
+        }
+        .block-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 1.2em;
+            background-color: #f6afef;
+            vertical-align: middle;
+            margin-left: 2px;
+        }
+        .ascii-border-x {
+            background-image: radial-gradient(#4f434c 1px, transparent 1px);
+            background-size: 4px 4px;
+        }
+        body {
+            background-color: #10141a;
+            color: #dfe2eb;
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="overflow-hidden h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-[#10141a] dark:bg-[#10141a] flex justify-between items-center w-full px-6 py-2 font-['Space_Grotesk'] tracking-tighter uppercase text-sm border-b border-[#4a154b]/20">
+<div class="flex items-center gap-4">
+<span class="text-[#f6afef] font-black italic tracking-widest text-lg">MONOSPACE_CMD_V1.0</span>
+<nav class="hidden md:flex gap-6 ml-8">
+<a class="text-[#f6afef]/60 hover:bg-[#4a154b] hover:text-white transition-colors duration-100" href="#">[ CHANNELS ]</a>
+<a class="text-[#f6afef]/60 hover:bg-[#4a154b] hover:text-white transition-colors duration-100" href="#">[ SEARCH ]</a>
+<a class="text-[#f6afef] border-b-2 border-[#f6afef] pb-1 hover:bg-[#4a154b] hover:text-white transition-colors duration-100" href="#"> [ CONFIG ]</a>
+</nav>
+</div>
+<div class="flex items-center gap-4 text-[#f6afef]">
+<span class="material-symbols-outlined hover:bg-[#4a154b] p-1 cursor-pointer">terminal</span>
+<span class="material-symbols-outlined hover:bg-[#4a154b] p-1 cursor-pointer">settings</span>
+<span class="material-symbols-outlined hover:bg-[#4a154b] p-1 cursor-pointer">help</span>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col h-full w-64 py-4 space-y-2 bg-[#10141a] dark:bg-[#10141a] font-['JetBrains_Mono'] text-xs uppercase border-r border-[#4a154b]/10">
+<div class="px-6 mb-6">
+<div class="flex items-center gap-2 mb-1">
+<span class="w-2 h-2 bg-secondary rounded-full"></span>
+<span class="text-[#f6afef] font-bold">ROOT_USER</span>
+</div>
+<div class="text-white/40 text-[10px]">ONLINE_IDLE</div>
+</div>
+<div class="space-y-1">
+<a class="text-white/40 pl-4 py-2 block hover:bg-[#181c22] hover:text-[#5edda0] transition-all" href="#">#general</a>
+<a class="text-white/40 pl-4 py-2 block hover:bg-[#181c22] hover:text-[#5edda0] transition-all" href="#">[#]engineering</a>
+<a class="text-white/40 pl-4 py-2 block hover:bg-[#181c22] hover:text-[#5edda0] transition-all" href="#">[#]design-ops</a>
+<a class="text-white/40 pl-4 py-2 block hover:bg-[#181c22] hover:text-[#5edda0] transition-all" href="#">@ai_architect</a>
+<a class="text-white/40 pl-4 py-2 block hover:bg-[#181c22] hover:text-[#5edda0] transition-all" href="#">@sys_admin</a>
+</div>
+<div class="mt-8 px-4">
+<button class="w-full py-2 bg-primary-container text-primary border border-primary/20 hover:bg-primary hover:text-on-primary transition-all">
+                    [ NEW_COMMAND ]
+                </button>
+</div>
+<div class="mt-auto space-y-1 pb-4">
+<a class="text-[#5edda0] border-l-2 border-[#5edda0] pl-4 font-bold bg-[#181c22] py-2 flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-[14px]">settings</span> SETTINGS
+                </a>
+<a class="text-white/40 pl-4 py-2 block hover:bg-[#181c22] hover:text-[#5edda0] transition-all flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-[14px]">logout</span> LOGOUT
+                </a>
+</div>
+</aside>
+<!-- Main Configuration Area (Vim-like Editor Canvas) -->
+<main class="flex-1 bg-surface-container-lowest flex flex-col relative">
+<!-- Editor Header / Status Line -->
+<div class="bg-surface-container-high px-4 py-1 flex justify-between items-center text-[10px] text-on-surface-variant font-bold border-b border-[#4a154b]/10">
+<span>~/.config/monospace/settings.yaml</span>
+<span>UTF-8 | YAML | 42:12</span>
+</div>
+<!-- Editor Gutter & Content -->
+<div class="flex-1 flex overflow-y-auto font-['JetBrains_Mono'] text-sm leading-relaxed p-4">
+<!-- Line Numbers -->
+<div class="text-on-surface-variant/30 pr-4 text-right select-none border-r border-[#4a154b]/10 mr-4">
+                    1<br/>2<br/>3<br/>4<br/>5<br/>6<br/>7<br/>8<br/>9<br/>10<br/>11<br/>12<br/>13<br/>14<br/>15<br/>16<br/>17<br/>18<br/>19<br/>20<br/>21<br/>22<br/>23<br/>24<br/>25
+                </div>
+<!-- Syntax Highlighted Content -->
+<div class="flex-1 text-on-surface whitespace-pre">
+<span class="text-secondary"># MONOSPACE_CMD CORE CONFIGURATION</span>
+<span class="text-primary">version:</span> <span class="text-secondary">"1.0.42"</span>
+<span class="text-primary">WORKSPACE_TOKEN:</span>
+<span class="text-primary">active_key:</span> <span class="text-secondary">"xoxb-9823-arch-alpha-7x92j"</span> <span class="text-on-surface-variant/40"># SECURE_STORAGE</span>
+<span class="text-primary">refresh_interval:</span> <span class="text-secondary">3600</span>
+<span class="text-primary">THEME_COLOR:</span>
+<span class="text-primary">palette:</span> <span class="text-secondary">"OBSIDIAN_VAPOR"</span>
+<span class="text-primary">accents:</span>
+<span class="text-primary">-</span> <span class="text-secondary">"#f6afef"</span> <span class="text-on-surface-variant/40"># Primary</span>
+<span class="text-primary">-</span> <span class="text-secondary">"#5edda0"</span> <span class="text-on-surface-variant/40"># Success</span>
+<span class="text-primary">glow_effects:</span> <span class="text-secondary">true</span>
+<span class="text-primary">AI_MODELS:</span>
+<span class="text-primary">default_provider:</span> <span class="text-secondary">"CLAUDE-3-OPUS"</span>
+<span class="text-primary">available_engines:</span>
+<span class="text-primary">-</span> <span class="text-secondary">"GPT-4-TURBO"</span>
+<span class="text-primary">-</span> <span class="text-secondary">"CLAUDE-3-OPUS"</span>
+<span class="text-primary">-</span> <span class="text-secondary">"MISTRAL-LARGE"</span>
+<span class="text-primary">-</span> <span class="text-secondary">"LLAMA-3-70B"</span>
+<span class="text-primary">context_window:</span> <span class="text-secondary">128000</span>
+<span class="text-primary">COMMAND_SHORTCUTS:</span>
+<span class="text-primary">quit:</span> <span class="text-secondary">":q"</span>
+<span class="text-primary">save:</span> <span class="text-secondary">":w"</span>
+<span class="text-primary">channel_jump:</span> <span class="text-secondary">":c"</span>
+<span class="text-primary">ai_prompt:</span> <span class="text-secondary">"/"</span>
+<span class="text-primary">search:</span> <span class="text-secondary">"?"</span>
+<span class="text-primary">cursor_style:</span> <span class="text-secondary">"BLOCK"</span><span class="block-cursor"></span>
+</div>
+</div>
+<!-- Bottom Command Bar -->
+<div class="bg-[#10141a] px-4 py-2 border-t border-[#4a154b]/40 flex justify-between items-center font-['JetBrains_Mono'] text-[10px]">
+<div class="flex gap-4">
+<span class="text-[#f6afef] font-bold">[ESC: BACK]</span>
+<span class="text-[#f6afef] font-bold">[CTRL+S: SAVE]</span>
+<span class="text-[#f6afef] font-bold">[:wq: SAVE &amp; QUIT]</span>
+</div>
+<div class="flex items-center gap-2 text-secondary">
+<span class="material-symbols-outlined text-xs">check_circle</span>
+<span>SYSTEM_SYNCHRONIZED</span>
+</div>
+</div>
+</main>
+</div>
+<!-- Mobile BottomNavBar -->
+<footer class="md:hidden fixed bottom-0 left-0 w-full flex justify-center items-center gap-0 bg-[#10141a] border-t border-[#4a154b]/20 shadow-[0_-4px_20px_rgba(74,21,75,0.1)] z-50">
+<div class="flex flex-col items-center justify-center text-[#f6afef]/50 px-6 py-2 hover:bg-[#181c22] transition-all">
+<span class="material-symbols-outlined">keyboard_command_key</span>
+<span class="text-[10px] font-bold uppercase">COMMAND</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#f6afef]/50 px-6 py-2 hover:bg-[#181c22] transition-all">
+<span class="material-symbols-outlined">forum</span>
+<span class="text-[10px] font-bold uppercase">THREADS</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#f6afef]/50 px-6 py-2 hover:bg-[#181c22] transition-all">
+<span class="material-symbols-outlined">bolt</span>
+<span class="text-[10px] font-bold uppercase">AI_MOD</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-[#4a154b] text-white px-6 py-2 transition-all">
+<span class="material-symbols-outlined">settings_input_component</span>
+<span class="text-[10px] font-bold uppercase">CONFIG</span>
+</div>
+</footer>
+<!-- Terminal Overlay Prompt (Floating) -->
+<div class="absolute bottom-16 right-8 bg-surface-container border border-primary/30 p-4 shadow-2xl hidden md:block">
+<div class="flex items-center gap-2 text-secondary mb-2 text-xs">
+<span class="material-symbols-outlined text-xs">terminal</span>
+<span>TERMINAL_OUTPUT</span>
+</div>
+<div class="text-[10px] space-y-1">
+<p class="text-on-surface-variant">root@monospace:~$ config --validate settings.yaml</p>
+<p class="text-secondary">&gt;&gt; Syntax check: SUCCESS</p>
+<p class="text-on-surface-variant">root@monospace:~$ _</p>
+</div>
+</div>
+</body></html>

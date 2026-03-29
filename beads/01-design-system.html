@@ -1,0 +1,315 @@
+<!-- Design System: MONOSPACE_CMD_V1.0 - Main Workspace View -->
+<!-- Primary chat interface with channels sidebar, message feed, AI hook interjections, and thread detail panel -->
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MONOSPACE_CMD_V1.0 | TERMINAL_WORKSPACE</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;700&amp;family=Inter:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary-fixed": "#002112",
+                        "on-background": "#dfe2eb",
+                        "on-tertiary-fixed": "#1a1c1c",
+                        "secondary-container": "#0aa56e",
+                        "on-error-container": "#ffdad6",
+                        "error": "#ffb4ab",
+                        "on-tertiary": "#2f3131",
+                        "surface-variant": "#31353c",
+                        "tertiary": "#c6c6c7",
+                        "on-primary-fixed": "#370139",
+                        "on-surface-variant": "#d2c2cd",
+                        "inverse-primary": "#844981",
+                        "on-secondary-container": "#00311d",
+                        "surface-dim": "#10141a",
+                        "primary": "#f6afef",
+                        "outline-variant": "#4f434c",
+                        "background": "#10141a",
+                        "tertiary-fixed": "#e2e2e2",
+                        "primary-container": "#4a154b",
+                        "on-primary-fixed-variant": "#693168",
+                        "inverse-on-surface": "#2d3137",
+                        "surface-container-high": "#262a31",
+                        "on-secondary": "#003822",
+                        "on-primary": "#4f1a50",
+                        "surface-tint": "#f6afef",
+                        "surface-container": "#1c2026",
+                        "on-surface": "#dfe2eb",
+                        "outline": "#9b8d97",
+                        "error-container": "#93000a",
+                        "inverse-surface": "#dfe2eb",
+                        "on-tertiary-container": "#929393",
+                        "on-primary-container": "#be7db9",
+                        "surface": "#10141a",
+                        "tertiary-container": "#2a2c2c",
+                        "primary-fixed-dim": "#f6afef",
+                        "secondary": "#5edda0",
+                        "surface-bright": "#353940",
+                        "on-secondary-fixed-variant": "#005234",
+                        "tertiary-fixed-dim": "#c6c6c7",
+                        "on-error": "#690005",
+                        "primary-fixed": "#ffd6f8",
+                        "surface-container-lowest": "#0a0e14",
+                        "surface-container-low": "#181c22",
+                        "on-tertiary-fixed-variant": "#454747",
+                        "secondary-fixed": "#7cfabb",
+                        "secondary-fixed-dim": "#5edda0",
+                        "surface-container-highest": "#31353c"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Inter"],
+                        "mono": ["JetBrains Mono"]
+                    },
+                    borderRadius: {"DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+            font-size: 1.25rem;
+        }
+        body {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .block-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 18px;
+            background-color: #f6afef;
+            vertical-align: middle;
+            margin-left: 4px;
+        }
+        .ascii-divider {
+            color: #4f434c;
+            user-select: none;
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #10141a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4a154b;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface selection:bg-primary-container selection:text-white">
+<!-- TOP NAVIGATION -->
+<header class="bg-[#10141a] dark:bg-[#10141a] text-[#f6afef] dark:text-[#f6afef] font-['Space_Grotesk'] tracking-tighter uppercase text-sm flex justify-between items-center w-full px-6 py-2 sticky top-0 z-50 bg-[#181c22] border-none">
+<div class="text-[#f6afef] font-black italic tracking-widest text-lg">
+            MONOSPACE_CMD_V1.0
+        </div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-[#f6afef] border-b-2 border-[#f6afef] pb-1 hover:bg-[#4a154b] hover:text-white transition-colors duration-100 uppercase" href="#">[ CHANNELS ]</a>
+<a class="text-[#f6afef]/60 hover:bg-[#4a154b] hover:text-white transition-colors duration-100 uppercase" href="#">[ SEARCH ]</a>
+<a class="text-[#f6afef]/60 hover:bg-[#4a154b] hover:text-white transition-colors duration-100 uppercase" href="#">[ CONFIG ]</a>
+</nav>
+<div class="flex items-center gap-4">
+<div class="hidden sm:flex items-center bg-surface-container-lowest px-3 py-1 text-on-surface-variant text-[10px]">
+<span class="text-secondary mr-2">●</span> SYS_READY: 127.0.0.1
+            </div>
+<button class="material-symbols-outlined text-[#f6afef]/60 hover:text-[#f6afef]">terminal</button>
+<button class="material-symbols-outlined text-[#f6afef]/60 hover:text-[#f6afef]">settings</button>
+<button class="material-symbols-outlined text-[#f6afef]/60 hover:text-[#f6afef]">help</button>
+</div>
+</header>
+<div class="flex h-[calc(100vh-84px)] overflow-hidden">
+<!-- SIDEBAR -->
+<aside class="hidden md:flex flex-col h-full w-64 bg-[#10141a] dark:bg-[#10141a] font-['JetBrains_Mono'] text-xs uppercase py-4 space-y-2 shrink-0 border-none bg-[#181c22]">
+<div class="px-4 mb-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 bg-primary-container flex items-center justify-center text-primary font-bold">R</div>
+<div>
+<div class="text-[#f6afef] font-bold">ROOT_USER</div>
+<div class="text-secondary text-[10px] opacity-80">ONLINE_IDLE</div>
+</div>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto space-y-1">
+<div class="px-4 text-on-surface-variant/40 text-[9px] font-bold tracking-widest mb-2 mt-4">CHANNELS</div>
+<a class="flex items-center gap-3 text-[#5edda0] border-l-2 border-[#5edda0] pl-4 font-bold bg-[#181c22] py-2 transition-all" href="#">
+<span class="material-symbols-outlined text-sm">tag</span> #general
+                </a>
+<a class="flex items-center gap-3 text-white/40 pl-4 py-2 hover:bg-[#181c22] hover:text-[#5edda0] transition-all" href="#">
+<span class="material-symbols-outlined text-sm">terminal</span> [#]engineering
+                </a>
+<a class="flex items-center gap-3 text-white/40 pl-4 py-2 hover:bg-[#181c22] hover:text-[#5edda0] transition-all" href="#">
+<span class="material-symbols-outlined text-sm">architecture</span> [#]design-ops
+                </a>
+<div class="px-4 text-on-surface-variant/40 text-[9px] font-bold tracking-widest mb-2 mt-6">DIRECT_MESSAGES</div>
+<a class="flex items-center gap-3 text-white/40 pl-4 py-2 hover:bg-[#181c22] hover:text-[#5edda0] transition-all" href="#">
+<span class="material-symbols-outlined text-sm">smart_toy</span> @ai_architect
+                </a>
+<a class="flex items-center gap-3 text-white/40 pl-4 py-2 hover:bg-[#181c22] hover:text-[#5edda0] transition-all" href="#">
+<span class="material-symbols-outlined text-sm">shield</span> @sys_admin
+                </a>
+<div class="px-4 text-secondary text-[9px] font-bold tracking-widest mb-2 mt-6">AI-TOOLS [HOOKS]</div>
+<a class="flex items-center justify-between group text-white/40 pl-4 py-2 hover:bg-[#4a154b]/20 hover:text-primary transition-all pr-4" href="#">
+<span class="flex items-center gap-3">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">bolt</span> AI-SUMMARIZER
+                    </span>
+<span class="text-[8px] bg-secondary-container/20 text-secondary px-1 border border-secondary/30">ACTIVE</span>
+</a>
+<a class="flex items-center justify-between group text-white/40 pl-4 py-2 hover:bg-[#4a154b]/20 hover:text-primary transition-all pr-4" href="#">
+<span class="flex items-center gap-3">
+<span class="material-symbols-outlined text-sm">smart_button</span> DRAFT-BOT
+                    </span>
+</a>
+</div>
+<div class="px-4 mt-auto space-y-4">
+<button class="w-full py-2 bg-primary-container text-primary font-bold border border-primary/20 hover:bg-primary hover:text-primary-container transition-colors uppercase">
+                    [ NEW_COMMAND ]
+                </button>
+<div class="flex flex-col gap-1 pb-4">
+<a class="flex items-center gap-3 text-white/40 hover:text-primary transition-all text-[10px]" href="#">
+<span class="material-symbols-outlined text-sm">settings</span> SETTINGS
+                    </a>
+<a class="flex items-center gap-3 text-white/40 hover:text-error transition-all text-[10px]" href="#">
+<span class="material-symbols-outlined text-sm">logout</span> LOGOUT
+                    </a>
+</div>
+</div>
+</aside>
+<!-- MAIN TERMINAL AREA -->
+<main class="flex-1 flex flex-col min-w-0 bg-surface-container-lowest relative">
+<!-- ASCII HEADER -->
+<div class="p-6 border-b border-outline-variant/10 bg-surface">
+<pre class="text-primary font-mono text-[10px] leading-none select-none">  ____ _____ _   _ _____ ____    _    _
+ / ___| ____| \ | | ____|  _ \  / \  | |
+| |  _|  _| |  \| |  _| | |_) |/ _ \ | |
+| |_| | |___| |\  | |___|  _  / ___ \| |___
+ \____|_____|_| \_|_____|_| \_/_/   \_\_____|
+                </pre>
+<div class="flex items-center gap-2 mt-4 text-on-surface-variant font-mono text-xs">
+<span class="text-secondary">&gt;&gt;&gt;</span> CHANNEL: #general
+                    <span class="ascii-divider">|</span>
+                    TOPIC: PROJECT_ALPHA_ORCHESTRATION
+                    <span class="ascii-divider">|</span>
+                    USERS: 42_ONLINE
+                </div>
+</div>
+<!-- CHAT FEED -->
+<div class="flex-1 overflow-y-auto p-6 font-mono text-sm space-y-1">
+<div class="flex gap-4 group hover:bg-surface-container-low/50 -mx-6 px-6 py-1">
+<span class="text-on-surface-variant/40 shrink-0 select-none">[09:14:22]</span>
+<span class="text-secondary shrink-0 font-bold">&lt;sys_admin&gt;</span>
+<span class="text-on-surface">Initializing deployment sequence for cluster_v4. Verify all nodes are responsive.</span>
+</div>
+<div class="flex gap-4 group hover:bg-surface-container-low/50 -mx-6 px-6 py-1">
+<span class="text-on-surface-variant/40 shrink-0 select-none">[09:14:45]</span>
+<span class="text-primary shrink-0 font-bold">&lt;ai_architect&gt;</span>
+<span class="text-on-surface">Neural weights localized. Synaptic bridge confirmed at 98.4% efficiency. Ready for injection.</span>
+</div>
+<div class="py-4 flex items-center gap-4 opacity-50 select-none">
+<div class="h-px flex-1 bg-outline-variant/30"></div>
+<span class="text-[10px] font-bold text-on-surface-variant">--- THURSDAY, OCT 24, 202X ---</span>
+<div class="h-px flex-1 bg-outline-variant/30"></div>
+</div>
+<div class="flex gap-4 group hover:bg-surface-container-low/50 -mx-6 px-6 py-1">
+<span class="text-on-surface-variant/40 shrink-0 select-none">[10:02:11]</span>
+<span class="text-secondary shrink-0 font-bold">&lt;dev_ops_01&gt;</span>
+<span class="text-on-surface">Pushing update to the main terminal shell. <code class="bg-surface-container-high px-1 text-primary">git commit -m "feat: monospace structural integrity"</code></span>
+</div>
+<!-- AI HOOK INTERJECTION -->
+<div class="my-4 p-4 bg-[#4a154b]/10 border-l-4 border-primary">
+<div class="flex items-center gap-2 text-primary font-bold text-xs mb-2">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">bolt</span>
+                        AI-SUMMARIZER_BOT [AUTO_SCAN]
+                    </div>
+<div class="text-xs text-on-surface/80 italic leading-relaxed">
+                        CONTEXT_DETECTED: Infrastructure deployment. <br/>
+                        SUGGESTED_ACTION: Review cluster logs for Node_7 error spikes before proceeding to Stage 2.
+                    </div>
+</div>
+<div class="flex gap-4 group hover:bg-surface-container-low/50 -mx-6 px-6 py-1">
+<span class="text-on-surface-variant/40 shrink-0 select-none">[10:05:59]</span>
+<span class="text-secondary shrink-0 font-bold">&lt;root_user&gt;</span>
+<span class="text-on-surface">Ack. Checking Node_7 now.</span>
+</div>
+<div class="flex gap-4 px-6 py-2 animate-pulse">
+<span class="text-secondary/50 text-[10px] font-bold">@ai_architect is typing...</span>
+</div>
+</div>
+<!-- COMMAND PROMPT -->
+<div class="p-6 bg-surface-container-lowest border-t border-outline-variant/10">
+<div class="relative flex items-center bg-surface-container px-4 py-3 border border-outline-variant/20 focus-within:border-primary/50 transition-all">
+<span class="text-secondary font-bold mr-3 shrink-0">[#general] &gt;</span>
+<input class="w-full bg-transparent border-none outline-none focus:ring-0 text-on-surface font-mono placeholder:text-on-surface-variant/30" placeholder="Type a message or command..." type="text"/>
+<div class="block-cursor"></div>
+<div class="absolute right-4 flex gap-3 text-on-surface-variant/40">
+<span class="text-[10px] hidden sm:block">CMD+K TO SEARCH</span>
+<span class="material-symbols-outlined text-lg">attach_file</span>
+<span class="material-symbols-outlined text-lg">mood</span>
+</div>
+</div>
+</div>
+</main>
+<!-- RIGHT PANE (Thread/Detail) -->
+<aside class="hidden xl:flex flex-col w-80 bg-surface-container-low border-l border-outline-variant/10">
+<div class="p-4 border-b border-outline-variant/10 flex justify-between items-center">
+<span class="font-bold text-xs">THREAD_DETAILS</span>
+<button class="material-symbols-outlined text-sm">close</button>
+</div>
+<div class="flex-1 p-6">
+<div class="flex flex-col items-center text-center mb-8">
+<div class="w-20 h-20 bg-surface-container-high mb-4 relative flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-secondary">terminal</span>
+<div class="absolute bottom-0 right-0 w-4 h-4 bg-secondary border-4 border-surface-container-low"></div>
+</div>
+<h3 class="text-primary font-bold">sys_admin</h3>
+<p class="text-[10px] text-on-surface-variant">System Architect &amp; Janitor</p>
+</div>
+<div class="space-y-6">
+<div>
+<div class="text-[9px] text-on-surface-variant/50 font-bold mb-2 uppercase tracking-widest">About</div>
+<p class="text-xs text-on-surface/80 leading-relaxed">Responsible for maintaining the integrity of the MONOSPACE grid. I speak in binary and drink black coffee.</p>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container px-3 py-2 border border-outline-variant/10">
+<div class="text-[8px] text-on-surface-variant/50">LOCAL_TIME</div>
+<div class="text-[10px]">10:15 AM</div>
+</div>
+<div class="bg-surface-container px-3 py-2 border border-outline-variant/10">
+<div class="text-[8px] text-on-surface-variant/50">PRONOUNS</div>
+<div class="text-[10px]">THEY/HE</div>
+</div>
+</div>
+<button class="w-full py-2 border border-outline-variant/30 text-[10px] font-bold hover:bg-surface-container-high transition-colors">
+                        [ VIEW_PROFILE_FULL ]
+                    </button>
+</div>
+</div>
+</aside>
+</div>
+<!-- BOTTOM NAVBAR (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full flex justify-center items-center gap-0 bg-[#10141a] dark:bg-[#10141a] font-['JetBrains_Mono'] text-[10px] uppercase font-bold z-50 border-t border-[#4a154b]/20 shadow-[0_-4px_20px_rgba(74,21,75,0.1)]">
+<a class="flex flex-col items-center justify-center bg-[#4a154b] text-white px-6 py-2 flex-1" href="#">
+<span class="material-symbols-outlined" data-icon="keyboard_command_key">keyboard_command_key</span>
+<span>COMMAND</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#f6afef]/50 px-6 py-2 flex-1 hover:bg-[#181c22]" href="#">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+<span>THREADS</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#f6afef]/50 px-6 py-2 flex-1 hover:bg-[#181c22]" href="#">
+<span class="material-symbols-outlined" data-icon="bolt">bolt</span>
+<span>AI_MOD</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#f6afef]/50 px-6 py-2 flex-1 hover:bg-[#181c22]" href="#">
+<span class="material-symbols-outlined" data-icon="settings_input_component">settings_input_component</span>
+<span>CONFIG</span>
+</a>
+</nav>
+</body></html>
