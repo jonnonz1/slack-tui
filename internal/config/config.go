@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	serviceName    = "monospace-cmd"
+	serviceName    = "slack-tui"
 	tokenKey       = "slack-user-token"
 	appTokenKey    = "slack-app-token"
 	configFileName = "config.json"
@@ -52,7 +52,7 @@ func configDir() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	dir := filepath.Join(home, ".config", "monospace-cmd")
+	dir := filepath.Join(home, ".config", "slack-tui")
 	return dir, os.MkdirAll(dir, 0700)
 }
 

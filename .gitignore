@@ -39,7 +39,7 @@ secrets.json
 config.json
 
 # Local config (contains client_id/secret)
-~/.config/monospace-cmd/
+~/.config/slack-tui/
 
 # Claude Code local settings
 .claude/settings.local.json

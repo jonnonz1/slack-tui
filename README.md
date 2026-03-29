@@ -39,54 +39,51 @@ AI hooks require an `ANTHROPIC_API_KEY` environment variable. They use Claude So
 
 Design beads are in [`beads/`](beads/) — open any `.html` file in a browser to preview the target aesthetic.
 
-## Installation
+## Quick Start
 
 ```bash
 go install github.com/jonnonz1/slack-tui@latest
+slack-tui
 ```
 
-Or build from source:
+That's it. If no Slack workspace is configured, the interactive setup wizard launches automatically and walks you through everything step by step.
+
+### What the setup wizard does
+
+The wizard runs in 6 steps — it opens the right pages in your browser and tells you exactly what to click:
+
+1. **Create Slack App** — opens [api.slack.com/apps](https://api.slack.com/apps), you create a new app
+2. **Add User Token Scopes** — lists the exact scopes to add under OAuth & Permissions
+3. **Enable Socket Mode** — guides you to create an app-level token
+4. **Subscribe to Events** — lists the exact events to subscribe to
+5. **Enter Credentials** — paste your Client ID, Client Secret, and App-Level Token
+6. **Authenticate** — opens Slack OAuth in your browser, you click Allow, done
+
+Config is saved to `~/.config/slack-tui/config.json`. Tokens are stored in your OS keychain.
+
+### Build from source
 
 ```bash
 git clone https://github.com/jonnonz1/slack-tui.git
 cd slack-tui
 go build -o slack-tui .
+./slack-tui
 ```
 
-## Setup
-
-### 1. Create a Slack App
-
-```bash
-slack-tui setup
-```
-
-This walks you through:
-1. Creating an app at [api.slack.com/apps](https://api.slack.com/apps)
-2. Adding User Token Scopes (channels, messages, reactions, search, etc.)
-3. Enabling Socket Mode with an app-level token
-4. Subscribing to message events
-
-### 2. Authenticate
-
-```bash
-slack-tui auth
-```
-
-Opens your browser for OAuth. The token is stored in your OS keychain.
-
-### 3. Run
-
-```bash
-slack-tui
-```
-
-For AI features:
+### For AI features
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
 slack-tui
 ```
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `slack-tui` | Launch the TUI (runs setup wizard if not configured) |
+| `slack-tui setup` | Re-run the interactive setup wizard |
+| `slack-tui auth` | Re-authenticate with Slack (e.g. if token expired) |
 
 ## Environment Variables
 
@@ -94,7 +91,7 @@ slack-tui
 |----------|----------|-------------|
 | `SLACK_TOKEN` | No | Override user token (skip keychain) |
 | `SLACK_APP_TOKEN` | No | Override app-level token (skip keychain) |
-| `ANTHROPIC_API_KEY` | For AI hooks | Claude API key |
+| `ANTHROPIC_API_KEY` | For AI hooks | Claude API key for summarizer, drafter, analyzer |
 
 ## Key Bindings
 
@@ -126,10 +123,12 @@ Global
 
 ## Configuration
 
-Config lives at `~/.config/monospace-cmd/config.json`:
+Config lives at `~/.config/slack-tui/config.json` and is created automatically by the setup wizard:
 
 ```json
 {
+  "client_id": "...",
+  "client_secret": "...",
   "theme": {
     "primary": "#f6afef",
     "secondary": "#5edda0",
@@ -157,26 +156,31 @@ Config lives at `~/.config/monospace-cmd/config.json`:
 }
 ```
 
+Tokens (`xoxp-` user token and `xapp-` app-level token) are stored in your OS keychain via [go-keyring](https://github.com/zalando/go-keyring), not in the config file.
+
 ## Architecture
 
 ```
 slack-tui/
   cmd/                     CLI entry points (cobra)
-    root.go, auth.go, setup.go, run.go
+    root.go                  command registration
+    setup.go                 interactive 6-step setup wizard + OAuth
+    auth.go                  re-authentication
+    run.go                   TUI launch (auto-detects missing config)
   internal/
     app/                   Root Bubbletea model, theme, keymap
     ui/
-      sidebar/             Channel list
+      sidebar/             Channel list with unread indicators
       messages/            Message viewport with AI hook rendering
       input/               Text input with block cursor
-      thread/              Thread panel with AI analysis
+      thread/              Thread panel with AI analysis sidebar
       modal/               Quick switcher (Ctrl+K), search (Ctrl+F)
-      statusbar/           Connection status, current channel
+      statusbar/           Connection status, current channel, user
     slack/                 Web API wrapper, Socket Mode bridge, cache
     ai/                    LLM engine — summarizer, drafter, analyzer
     markdown/              Slack mrkdwn -> terminal renderer
     config/                Settings, keychain token storage
-  beads/                   HTML design mockups
+  beads/                   HTML design mockups (4 views)
 ```
 
 ## Tech Stack
@@ -185,7 +189,8 @@ slack-tui/
 - **[Lipgloss](https://github.com/charmbracelet/lipgloss)** — Terminal styling
 - **[slack-go/slack](https://github.com/slack-go/slack)** — Slack Web API + Socket Mode
 - **[Anthropic SDK](https://github.com/anthropics/anthropic-sdk-go)** — Claude API for AI hooks
-- **[go-keyring](https://github.com/zalando/go-keyring)** — Secure token storage
+- **[go-keyring](https://github.com/zalando/go-keyring)** — Secure OS keychain token storage
+- **[Cobra](https://github.com/spf13/cobra)** — CLI framework
 
 ## License
 
