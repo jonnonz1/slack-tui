@@ -39,7 +39,7 @@ func runSetup(cmd *cobra.Command, args []string) error {
 	fmt.Printf("  %sI'll open api.slack.com/apps in your browser.%s\n", colorDim, colorReset)
 	fmt.Println()
 	fmt.Printf("  %s1.%s Click %sCreate New App%s > %sFrom scratch%s\n", colorGreen, colorReset, colorBold, colorReset, colorBold, colorReset)
-	fmt.Printf("  %s2.%s Name it anything (e.g. %sMONOSPACE_CMD%s)\n", colorGreen, colorReset, colorPink, colorReset)
+	fmt.Printf("  %s2.%s Name it anything (e.g. %sslack-tui%s)\n", colorGreen, colorReset, colorPink, colorReset)
 	fmt.Printf("  %s3.%s Select your workspace\n", colorGreen, colorReset)
 	fmt.Println()
 
