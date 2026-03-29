@@ -93,6 +93,11 @@ func DefaultConfig() *Config {
 	}
 }
 
+// IsConfigured returns true if the essential Slack credentials are set.
+func (c *Config) IsConfigured() bool {
+	return c.ClientID != "" && c.ClientSecret != ""
+}
+
 func Load() (*Config, error) {
 	path, err := configPath()
 	if err != nil {

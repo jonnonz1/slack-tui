@@ -17,26 +17,49 @@ func runApp(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
+	// Auto-detect missing setup and offer to run it
+	if !cfg.IsConfigured() {
+		fmt.Println()
+		fmt.Printf("  %sNo Slack workspace configured yet.%s\n", colorPink, colorReset)
+		fmt.Printf("  %sStarting setup wizard...%s\n", colorDim, colorReset)
+		if err := runSetup(cmd, args); err != nil {
+			return err
+		}
+		// Reload config after setup
+		cfg, err = config.Load()
+		if err != nil {
+			return fmt.Errorf("failed to reload config: %w", err)
+		}
+	}
+
 	token, err := config.GetToken()
 	if err != nil {
-		return fmt.Errorf("no auth token found — run 'slack-tui auth' first: %w", err)
+		fmt.Println()
+		fmt.Printf("  %sNo auth token found. Re-running authentication...%s\n", colorPink, colorReset)
+		fmt.Println()
+		token, err = runOAuth(cfg)
+		if err != nil {
+			return fmt.Errorf("auth failed: %w", err)
+		}
+		if err := config.SaveToken(token); err != nil {
+			return fmt.Errorf("failed to save token: %w", err)
+		}
 	}
 
 	appToken, err := config.GetAppToken()
 	if err != nil {
-		return fmt.Errorf("no app-level token found — run 'slack-tui setup' first: %w", err)
+		return fmt.Errorf("no app-level token found — run 'slack-tui setup': %w", err)
 	}
 
 	client, err := slack.NewClient(token, appToken)
 	if err != nil {
-		return fmt.Errorf("failed to create Slack client: %w", err)
+		return fmt.Errorf("failed to connect to Slack: %w", err)
 	}
 
 	model := app.New(client, cfg)
 
 	p := tea.NewProgram(model)
 
-	// Start socket mode event relay in background
 	go client.StartSocketMode(p)
 
 	if _, err := p.Run(); err != nil {
