@@ -49,7 +49,7 @@ var (
 	userMentionRe   = regexp.MustCompile(`<@([A-Z0-9]+)(?:\|([^>]*))?> `)
 	chanMentionRe   = regexp.MustCompile(`<#([A-Z0-9]+)(?:\|([^>]*))?> `)
 	linkRe          = regexp.MustCompile(`<(https?://[^|>]+)(?:\|([^>]+))?>`)
-	emojiRe         = regexp.MustCompile(`:([a-z0-9_+-]+):`)
+	emojiRe         = regexp.MustCompile(`:([a-z0-9_+\-]+):`)
 )
 
 func (r *Renderer) Render(text string) string {
