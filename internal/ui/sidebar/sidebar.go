@@ -10,13 +10,11 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// ChannelSelectedMsg is sent when the user picks a channel.
 type ChannelSelectedMsg struct {
 	ChannelID   string
 	ChannelName string
 }
 
-// ChannelsLoadedMsg is the result of loading channels.
 type ChannelsLoadedMsg struct {
 	Channels []slack.Channel
 	Err      error
@@ -28,7 +26,7 @@ type Model struct {
 	cursor   int
 	width    int
 	height   int
-	offset   int // scroll offset
+	offset   int
 	loading  bool
 }
 
@@ -104,138 +102,85 @@ func (m Model) View(width, height int, focused bool) string {
 		return ""
 	}
 
-	var b strings.Builder
+	var lines []string
 
-	// Header
-	header := lipgloss.NewStyle().
-		Width(width).
-		Bold(true).
-		Foreground(lipgloss.Color("#f6afef")).
-		Render("MONOSPACE_CMD")
-	b.WriteString(header)
-	b.WriteString("\n")
-
-	// Divider
-	b.WriteString(strings.Repeat("─", width))
-	b.WriteString("\n")
+	headerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#f6afef")).Bold(true)
+	lines = append(lines, headerStyle.Render("SLACK-TUI"))
+	lines = append(lines, strings.Repeat("─", width))
 
 	if m.loading {
-		b.WriteString("  Loading channels...")
-		return m.containerStyle(width, height, focused).Render(b.String())
+		lines = append(lines, "  Loading...")
+		return strings.Join(lines, "\n")
 	}
 
-	// Group channels
-	var publicChans, privateChans, dms []indexedChannel
+	var chans, dms []int
 	for i, ch := range m.channels {
-		ic := indexedChannel{index: i, channel: ch}
-		switch {
-		case ch.IsDM || ch.IsGroupDM:
-			dms = append(dms, ic)
-		case ch.IsPrivate:
-			privateChans = append(privateChans, ic)
-		default:
-			publicChans = append(publicChans, ic)
-		}
-	}
-
-	usedLines := 2 // header + divider
-
-	usedLines += m.renderGroup(&b, "CHANNELS", publicChans, width, focused)
-	usedLines += m.renderGroup(&b, "PRIVATE", privateChans, width, focused)
-	usedLines += m.renderGroup(&b, "DIRECT_MESSAGES", dms, width, focused)
-
-	// Pad remaining space
-	for i := usedLines; i < height; i++ {
-		b.WriteString("\n")
-	}
-
-	return m.containerStyle(width, height, focused).Render(b.String())
-}
-
-type indexedChannel struct {
-	index   int
-	channel slack.Channel
-}
-
-func (m Model) renderGroup(b *strings.Builder, label string, items []indexedChannel, width int, focused bool) int {
-	if len(items) == 0 {
-		return 0
-	}
-
-	lines := 0
-
-	// Section label
-	labelStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#666666")).
-		Bold(true)
-	b.WriteString("\n")
-	b.WriteString(labelStyle.Render(label))
-	b.WriteString("\n")
-	lines += 2
-
-	for _, ic := range items {
-		ch := ic.channel
-		selected := ic.index == m.cursor
-
-		name := ch.Name
-		if len(name) > width-4 {
-			name = name[:width-7] + "..."
-		}
-
-		unread := ""
-		if ch.UnreadCount > 0 {
-			unread = fmt.Sprintf(" (%d)", ch.UnreadCount)
-		}
-
-		line := fmt.Sprintf("  %s%s", name, unread)
-
-		style := lipgloss.NewStyle().Width(width)
-
-		if selected && focused {
-			style = style.
-				Foreground(lipgloss.Color("#5edda0")).
-				Bold(true).
-				Background(lipgloss.Color("#181c22")).
-				BorderLeft(true).
-				BorderStyle(lipgloss.ThickBorder()).
-				BorderForeground(lipgloss.Color("#5edda0"))
-		} else if ch.UnreadCount > 0 {
-			style = style.
-				Foreground(lipgloss.Color("#dfe2eb")).
-				Bold(true)
+		if ch.IsDM || ch.IsGroupDM {
+			dms = append(dms, i)
 		} else {
-			style = style.
-				Foreground(lipgloss.Color("#666666"))
+			chans = append(chans, i)
 		}
-
-		b.WriteString(style.Render(line))
-		b.WriteString("\n")
-		lines++
 	}
 
-	return lines
+	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#666666"))
+	activeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#5edda0")).Bold(true)
+	unreadStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#dfe2eb")).Bold(true)
+
+	if len(chans) > 0 {
+		lines = append(lines, "")
+		lines = append(lines, dimStyle.Render("CHANNELS"))
+		for _, idx := range chans {
+			lines = append(lines, m.renderChannel(idx, width, focused, activeStyle, unreadStyle, dimStyle))
+		}
+	}
+
+	if len(dms) > 0 {
+		lines = append(lines, "")
+		lines = append(lines, dimStyle.Render("DIRECT MESSAGES"))
+		for _, idx := range dms {
+			lines = append(lines, m.renderChannel(idx, width, focused, activeStyle, unreadStyle, dimStyle))
+		}
+	}
+
+	return strings.Join(lines, "\n")
 }
 
-func (m Model) containerStyle(width, height int, focused bool) lipgloss.Style {
-	borderColor := lipgloss.Color("#4f434c")
-	if focused {
-		borderColor = lipgloss.Color("#f6afef")
+func (m Model) renderChannel(idx, width int, focused bool, active, unread, dim lipgloss.Style) string {
+	ch := m.channels[idx]
+	selected := idx == m.cursor
+
+	name := ch.Name
+	maxName := width - 6
+	if maxName < 5 {
+		maxName = 5
+	}
+	if len(name) > maxName {
+		name = name[:maxName-3] + "..."
 	}
 
-	return lipgloss.NewStyle().
-		Width(width).
-		Height(height).
-		Background(lipgloss.Color("#10141a")).
-		BorderRight(true).
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(borderColor)
+	badge := ""
+	if ch.UnreadCount > 0 {
+		badge = fmt.Sprintf(" (%d)", ch.UnreadCount)
+	}
+
+	line := "  " + name + badge
+
+	if selected && focused {
+		return "▸ " + active.Render(name+badge)
+	} else if ch.UnreadCount > 0 {
+		return unread.Render(line)
+	}
+	return dim.Render(line)
 }
 
 func (m *Model) ensureVisible() {
 	if m.height == 0 {
 		return
 	}
-	visible := m.height - 4 // account for headers
+	visible := m.height - 4
+	if visible < 1 {
+		visible = 1
+	}
 	if m.cursor < m.offset {
 		m.offset = m.cursor
 	}

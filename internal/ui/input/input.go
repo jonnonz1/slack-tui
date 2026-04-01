@@ -126,17 +126,7 @@ func (m Model) View(width, height int, focused bool, channelName string) string 
 
 	line := prompt + " " + displayText
 
-	borderColor := lipgloss.Color("#4f434c")
-	if focused {
-		borderColor = lipgloss.Color("#f6afef")
-	}
+	sep := lipgloss.NewStyle().Foreground(lipgloss.Color("#4f434c")).Render(strings.Repeat("─", width))
 
-	return lipgloss.NewStyle().
-		Width(width).
-		Height(height).
-		BorderTop(true).
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(borderColor).
-		Padding(0, 1).
-		Render(line)
+	return sep + "\n" + line
 }
