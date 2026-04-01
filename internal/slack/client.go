@@ -2,6 +2,7 @@ package slack
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 
@@ -11,6 +12,14 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 )
+
+// discardLogger silences slack-go's internal logging so it doesn't
+// pollute the TUI output.
+var discardLogger = log.New(noopWriter{}, "", 0)
+
+type noopWriter struct{}
+
+func (noopWriter) Write(p []byte) (int, error) { return len(p), nil }
 
 // Client wraps the Slack Web API and Socket Mode connections.
 type Client struct {
@@ -25,9 +34,13 @@ func NewClient(userToken, appToken string) (*Client, error) {
 	api := slack.New(
 		userToken,
 		slack.OptionAppLevelToken(appToken),
+		slack.OptionLog(discardLogger),
 	)
 
-	socket := socketmode.New(api)
+	socket := socketmode.New(
+		api,
+		socketmode.OptionLog(discardLogger),
+	)
 
 	// Verify auth and get our own user ID
 	resp, err := api.AuthTest()
@@ -240,6 +253,10 @@ func (c *Client) StartSocketMode(p *tea.Program) {
 	handler.Handle(socketmode.EventTypeEventsAPI, func(evt *socketmode.Event, client *socketmode.Client) {
 		client.Ack(*evt.Request)
 		c.handleEvent(evt, p)
+	})
+
+	handler.Handle(socketmode.EventTypeHello, func(evt *socketmode.Event, client *socketmode.Client) {
+		// Suppress the "Unexpected event type: hello" log
 	})
 
 	handler.Handle(socketmode.EventTypeConnecting, func(evt *socketmode.Event, client *socketmode.Client) {
