@@ -37,7 +37,14 @@ AI hooks require an `ANTHROPIC_API_KEY` environment variable. They use Claude So
 
 ## Screenshots
 
-Design beads are in [`beads/`](beads/) — open any `.html` file in a browser to preview the target aesthetic.
+### Chat View
+![Chat View](images/chat-view.png)
+
+### Thread View
+![Thread View](images/thread-view.png)
+
+### AI Summary
+![AI Summary](images/ai-summary-view.png)
 
 ## Quick Start
 

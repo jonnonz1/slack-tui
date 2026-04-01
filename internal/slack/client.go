@@ -250,13 +250,11 @@ func (c *Client) SearchMessages(query string) ([]Message, error) {
 func (c *Client) StartSocketMode(p *tea.Program) {
 	handler := socketmode.NewSocketmodeHandler(c.socket)
 
+	handler.HandleDefault(func(evt *socketmode.Event, client *socketmode.Client) {})
+
 	handler.Handle(socketmode.EventTypeEventsAPI, func(evt *socketmode.Event, client *socketmode.Client) {
 		client.Ack(*evt.Request)
 		c.handleEvent(evt, p)
-	})
-
-	handler.Handle(socketmode.EventTypeHello, func(evt *socketmode.Event, client *socketmode.Client) {
-		// Suppress the "Unexpected event type: hello" log
 	})
 
 	handler.Handle(socketmode.EventTypeConnecting, func(evt *socketmode.Event, client *socketmode.Client) {
@@ -290,6 +288,7 @@ func (c *Client) handleEvent(evt *socketmode.Event, p *tea.Program) {
 			Username:  user.DisplayName,
 			Text:      ev.Text,
 			Timestamp: parseSlackTimestamp(ev.Timestamp),
+			SlackTS:   ev.Timestamp,
 			ThreadTS:  ev.ThreadTimestamp,
 		}
 
@@ -353,6 +352,7 @@ func (c *Client) convertMessage(channelID string, msg slack.Message) Message {
 		Username:   user.DisplayName,
 		Text:       msg.Text,
 		Timestamp:  parseSlackTimestamp(msg.Timestamp),
+		SlackTS:    msg.Timestamp,
 		ThreadTS:   msg.ThreadTimestamp,
 		ReplyCount: msg.ReplyCount,
 		Reactions:  reactions,

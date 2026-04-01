@@ -23,6 +23,7 @@ type Message struct {
 	Username  string
 	Text      string
 	Timestamp time.Time
+	SlackTS   string
 	ThreadTS  string
 	ReplyCount int
 	Reactions []Reaction

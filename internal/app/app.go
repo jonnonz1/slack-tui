@@ -11,6 +11,7 @@ import (
 	"github.com/jonnonz1/slack-tui/internal/ui/messages"
 	"github.com/jonnonz1/slack-tui/internal/ui/sidebar"
 	"github.com/jonnonz1/slack-tui/internal/ui/statusbar"
+	"github.com/jonnonz1/slack-tui/internal/ui/thread"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/lipgloss"
@@ -42,9 +43,11 @@ type Model struct {
 	sidebar   sidebar.Model
 	messages  messages.Model
 	input     input.Model
+	thread    thread.Model
 	statusbar statusbar.Model
 
-	activeChannel string
+	activeChannel     string
+	activeChannelName string
 }
 
 func New(client *slack.Client, cfg *config.Config) Model {
@@ -59,9 +62,10 @@ func New(client *slack.Client, cfg *config.Config) Model {
 		keymap:   km,
 		aiEngine: engine,
 		focus:    FocusSidebar,
-		sidebar:  sidebar.New(client),
-		messages: messages.New(client, t.Username, t.Timestamp, t.OnSurface, t.Primary, t.Outline),
-		input:    input.New(),
+		sidebar:   sidebar.New(client),
+		messages:  messages.New(client, t.Username, t.Timestamp, t.OnSurface, t.Primary, t.Outline),
+		input:     input.New(),
+		thread:    thread.New(client),
 		statusbar: statusbar.New(),
 	}
 }
@@ -83,7 +87,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m = m.resize()
 
 	case tea.KeyMsg:
-		cmd := m.handleKey(msg)
+		var cmd tea.Cmd
+		m, cmd = m.handleKey(msg)
 		if cmd != nil {
 			cmds = append(cmds, cmd)
 		}
@@ -104,6 +109,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case sidebar.ChannelSelectedMsg:
 		m.activeChannel = msg.ChannelID
+		m.activeChannelName = msg.ChannelName
 		m.focus = FocusMessages
 		m.statusbar = m.statusbar.SetChannel(msg.ChannelName)
 		cmd := m.messages.LoadChannel(msg.ChannelID)
@@ -113,6 +119,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.activeChannel != "" && msg.Text != "" {
 			cmds = append(cmds, m.sendMessage(msg.Text))
 		}
+
+	case thread.ThreadLoadedMsg:
+		var cmd tea.Cmd
+		m.thread, cmd = m.thread.Update(msg)
+		cmds = append(cmds, cmd)
 
 	case ai.SummaryResultMsg:
 		m.messages = m.messages.AppendAIHook(msg)
@@ -138,6 +149,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var cmd tea.Cmd
 		m.input, cmd = m.input.Update(msg)
 		cmds = append(cmds, cmd)
+	case FocusThread:
+		var cmd tea.Cmd
+		m.thread, cmd = m.thread.Update(msg)
+		cmds = append(cmds, cmd)
+		if !m.thread.IsOpen() {
+			m.focus = FocusMessages
+		}
 	}
 
 	return m, tea.Batch(cmds...)
@@ -171,16 +189,57 @@ func (m Model) View() tea.View {
 	sidebarContent := m.sidebar.View(sidebarWidth, contentHeight+inputHeight, m.focus == FocusSidebar)
 	sidebarBox := boxed(sidebarContent, sidebarWidth, contentHeight+inputHeight)
 
+	// Split right pane for thread if open
+	msgWidth := mainWidth
+	threadWidth := 0
+	if m.thread.IsOpen() {
+		threadWidth = mainWidth / 3
+		if threadWidth < 20 {
+			threadWidth = 20
+		}
+		msgWidth = mainWidth - threadWidth - 1 // -1 for separator
+	}
+
 	// Build messages
-	msgContent := m.messages.View(mainWidth, contentHeight, m.focus == FocusMessages)
-	msgBox := boxed(msgContent, mainWidth, contentHeight)
+	msgContent := m.messages.View(msgWidth, contentHeight, m.focus == FocusMessages)
+	msgBox := boxed(msgContent, msgWidth, contentHeight)
+
+	// Build thread
+	var threadBox string
+	if m.thread.IsOpen() {
+		threadContent := m.thread.View(threadWidth, contentHeight, m.focus == FocusThread)
+		threadBox = boxed(threadContent, threadWidth, contentHeight)
+	}
 
 	// Build input
-	inputContent := m.input.View(mainWidth, inputHeight, m.focus == FocusInput, m.activeChannel)
+	inputContent := m.input.View(mainWidth, inputHeight, m.focus == FocusInput, m.activeChannelName)
 	inputBox := boxed(inputContent, mainWidth, inputHeight)
 
-	// Right side: messages + input stacked
-	rightPane := msgBox + "\n" + inputBox
+	// Right side: messages (+ thread) + input stacked
+	var rightPane string
+	if m.thread.IsOpen() {
+		msgLines := strings.Split(msgBox, "\n")
+		threadLines := strings.Split(threadBox, "\n")
+		sep := lipgloss.NewStyle().Foreground(lipgloss.Color("#4f434c")).Render("│")
+		var combined strings.Builder
+		for i := 0; i < contentHeight; i++ {
+			ml := ""
+			if i < len(msgLines) {
+				ml = msgLines[i]
+			}
+			tl := ""
+			if i < len(threadLines) {
+				tl = threadLines[i]
+			}
+			if i > 0 {
+				combined.WriteString("\n")
+			}
+			combined.WriteString(ml + sep + tl)
+		}
+		rightPane = combined.String() + "\n" + inputBox
+	} else {
+		rightPane = msgBox + "\n" + inputBox
+	}
 
 	// Main layout: sidebar | right pane (line by line)
 	sidebarLines := strings.Split(sidebarBox, "\n")
@@ -285,52 +344,78 @@ func visibleLen(s string) int {
 	return n
 }
 
-func (m Model) handleKey(msg tea.KeyMsg) tea.Cmd {
+func (m Model) handleKey(msg tea.KeyMsg) (Model, tea.Cmd) {
 	key := msg.Key()
 
 	if key == m.keymap.Quit {
-		return tea.Quit
+		return m, tea.Quit
 	}
 
 	if key == m.keymap.FocusNext {
-		m.cycleFocus(1)
-		return nil
+		m = m.cycleFocus(1)
+		return m, nil
 	}
 
 	if key == m.keymap.FocusPrev {
-		m.cycleFocus(-1)
-		return nil
+		m = m.cycleFocus(-1)
+		return m, nil
+	}
+
+	if key == m.keymap.OpenThread && m.focus == FocusMessages {
+		if msg, ok := m.messages.SelectedMessage(); ok {
+			threadTS := msg.SlackTS
+			if msg.ThreadTS != "" {
+				threadTS = msg.ThreadTS
+			}
+			if threadTS != "" && msg.ReplyCount > 0 || msg.ThreadTS != "" {
+				var cmd tea.Cmd
+				m.thread, cmd = m.thread.Open(m.activeChannel, threadTS)
+				m.focus = FocusThread
+				return m, cmd
+			}
+		}
+		return m, nil
+	}
+
+	if key == m.keymap.ClosePanel && m.focus == FocusThread {
+		m.thread = m.thread.Close()
+		m.focus = FocusMessages
+		return m, nil
 	}
 
 	if key == m.keymap.ClosePanel && m.focus != FocusSidebar {
 		m.focus = FocusMessages
-		return nil
+		return m, nil
 	}
 
 	if key == m.keymap.FocusInput {
 		m.focus = FocusInput
-		return nil
+		return m, nil
 	}
 
 	if key == m.keymap.AISummarize && m.activeChannel != "" {
-		return m.aiEngine.Summarize(m.activeChannel, m.messages.RecentTexts(20))
+		return m, m.aiEngine.Summarize(m.activeChannel, m.messages.RecentTexts(20))
 	}
 
 	if key == m.keymap.AIDraft && m.activeChannel != "" {
-		return m.aiEngine.Draft(m.activeChannel, m.messages.RecentTexts(20))
+		return m, m.aiEngine.Draft(m.activeChannel, m.messages.RecentTexts(20))
 	}
 
-	return nil
+	return m, nil
 }
 
-func (m *Model) cycleFocus(dir int) {
+func (m Model) cycleFocus(dir int) Model {
 	focuses := []Focus{FocusSidebar, FocusMessages, FocusInput}
+	if m.thread.IsOpen() {
+		focuses = []Focus{FocusSidebar, FocusMessages, FocusThread, FocusInput}
+	}
 	for i, f := range focuses {
 		if f == m.focus {
 			m.focus = focuses[(i+dir+len(focuses))%len(focuses)]
-			return
+			return m
 		}
 	}
+	return m
 }
 
 func (m Model) resize() Model {
@@ -363,7 +448,14 @@ func (m Model) sendMessage(text string) tea.Cmd {
 		if err != nil {
 			return input.SendErrorMsg{Err: err}
 		}
-		return nil
+		msgs, err := client.GetHistory(channelID, 50)
+		if err != nil {
+			return nil
+		}
+		return messages.MessagesLoadedMsg{
+			ChannelID: channelID,
+			Messages:  msgs,
+		}
 	}
 }
 

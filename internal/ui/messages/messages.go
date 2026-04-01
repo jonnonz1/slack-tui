@@ -161,6 +161,13 @@ func (m Model) ShowDrafts(drafts ai.DraftResultMsg) Model {
 	return m
 }
 
+func (m Model) SelectedMessage() (slack.Message, bool) {
+	if m.cursor >= 0 && m.cursor < len(m.messages) {
+		return m.messages[m.cursor], true
+	}
+	return slack.Message{}, false
+}
+
 func (m Model) RecentTexts(n int) []string {
 	start := 0
 	if len(m.messages) > n {
